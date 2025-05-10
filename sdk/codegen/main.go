@@ -19,9 +19,9 @@ package {{.Package}}
 import (
 	"context"
 	"github.com/juju/errors"
-	"github.com/use-go/onvif"
-	"github.com/use-go/onvif/sdk"
-	"github.com/use-go/onvif/{{.StructPackage}}"
+	"github.com/kalmastenitin/onvif"
+	"github.com/kalmastenitin/onvif/sdk"
+	"github.com/kalmastenitin/onvif/{{.StructPackage}}"
 )
 
 // Call_{{.TypeRequest}} forwards the call to dev.CallMethod() then parses the payload of the reply as a {{.TypeReply}}.

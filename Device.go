@@ -1,9 +1,13 @@
 package onvif
 
 import (
+	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
-	"io/ioutil"
+	"fmt"
+	"io"
+
 	"net/http"
 	"net/url"
 	"reflect"
@@ -11,10 +15,10 @@ import (
 	"strings"
 
 	"github.com/beevik/etree"
-	"github.com/use-go/onvif/device"
-	"github.com/use-go/onvif/gosoap"
-	"github.com/use-go/onvif/networking"
-	wsdiscovery "github.com/use-go/onvif/ws-discovery"
+	"github.com/kalmastenitin/onvif/device"
+	"github.com/kalmastenitin/onvif/gosoap"
+	"github.com/kalmastenitin/onvif/networking"
+	wsdiscovery "github.com/kalmastenitin/onvif/ws-discovery"
 )
 
 // Xlmns XML Scheam
@@ -45,6 +49,7 @@ const (
 	NVS
 	NVA
 	NVT
+	ContentType = "Content-Type"
 )
 
 func (devType DeviceType) String() string {
@@ -76,16 +81,19 @@ type DeviceInfo struct {
 // struct represents an abstract ONVIF device.
 // It contains methods, which helps to communicate with ONVIF device
 type Device struct {
-	params    DeviceParams
-	endpoints map[string]string
-	info      DeviceInfo
+	params       DeviceParams
+	endpoints    map[string]string
+	info         DeviceInfo
+	digestClient *DigestClient
 }
 
 type DeviceParams struct {
-	Xaddr      string
-	Username   string
-	Password   string
-	HttpClient *http.Client
+	Xaddr              string
+	Username           string
+	Password           string
+	AuthMode           string
+	EndpointRefAddress string
+	HttpClient         *http.Client
 }
 
 // GetServices return available endpoints
@@ -104,7 +112,7 @@ func (dev *Device) GetDeviceParams() DeviceParams {
 }
 
 func readResponse(resp *http.Response) string {
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
@@ -148,7 +156,7 @@ func GetAvailableDevicesAtSpecificEthernetInterface(interfaceName string) ([]Dev
 func (dev *Device) getSupportedServices(resp *http.Response) error {
 	doc := etree.NewDocument()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -289,4 +297,157 @@ func (dev Device) callMethodDo(endpoint string, method interface{}) (*http.Respo
 	}
 
 	return networking.SendSoap(dev.params.HttpClient, endpoint, soap.String())
+}
+
+func (dev *Device) GetEndpointByRequestStruct(requestStruct interface{}) (string, error) {
+	pkgPath := strings.Split(reflect.TypeOf(requestStruct).Elem().PkgPath(), "/")
+	pkg := strings.ToLower(pkgPath[len(pkgPath)-1])
+
+	endpoint, err := dev.getEndpoint(pkg)
+	if err != nil {
+		return "", err
+	}
+	return endpoint, err
+}
+
+func (dev *Device) SendSoap(endpoint string, xmlRequestBody string) (resp *http.Response, err error) {
+	soap := gosoap.NewEmptySOAP()
+	soap.AddStringBodyContent(xmlRequestBody)
+	soap.AddRootNamespaces(Xlmns)
+	if dev.params.AuthMode == UsernameTokenAuth || dev.params.AuthMode == Both {
+		err = soap.AddWSSecurity(dev.params.Username, dev.params.Password)
+		if err != nil {
+			return nil, fmt.Errorf("send soap request failed: %w", err)
+		}
+	}
+
+	if dev.params.AuthMode == DigestAuth || dev.params.AuthMode == Both {
+		resp, err = dev.digestClient.Do(http.MethodPost, endpoint, soap.String())
+	} else {
+		var req *http.Request
+		req, err = createHttpRequest(http.MethodPost, endpoint, soap.String())
+		if err != nil {
+			return nil, err
+		}
+		resp, err = dev.params.HttpClient.Do(req)
+	}
+	return resp, err
+}
+
+func createHttpRequest(httpMethod string, endpoint string, soap string) (req *http.Request, err error) {
+	req, err = http.NewRequest(httpMethod, endpoint, bytes.NewBufferString(soap))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set(ContentType, "application/soap+xml; charset=utf-8")
+	return req, nil
+}
+
+func (dev *Device) CallOnvifFunction(serviceName, functionName string, data []byte) (interface{}, error) {
+	function, err := FunctionByServiceAndFunctionName(serviceName, functionName)
+	if err != nil {
+		return nil, err
+	}
+	request, err := createRequest(function, data)
+	if err != nil {
+		return nil, fmt.Errorf("fail to create '%s' request for the web service '%s', %v", functionName, serviceName, err)
+	}
+
+	endpoint, err := dev.GetEndpointByRequestStruct(request)
+	if err != nil {
+		return nil, err
+	}
+
+	requestBody, err := xml.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	xmlRequestBody := string(requestBody)
+
+	servResp, err := dev.SendSoap(endpoint, xmlRequestBody)
+	if err != nil {
+		return nil, fmt.Errorf("fail to send the '%s' request for the web service '%s', %v", functionName, serviceName, err)
+	}
+	defer servResp.Body.Close()
+
+	rsp, err := io.ReadAll(servResp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	responseEnvelope, err := createResponse(function, rsp)
+	if err != nil {
+		return nil, fmt.Errorf("fail to create '%s' response for the web service '%s', %v", functionName, serviceName, err)
+	}
+
+	if servResp.StatusCode == http.StatusUnauthorized {
+		return nil, fmt.Errorf("fail to verify the authentication for the function '%s' of web service '%s'. Onvif error: %s",
+			functionName, serviceName, responseEnvelope.Body.Fault.String())
+	} else if servResp.StatusCode == http.StatusBadRequest {
+		return nil, fmt.Errorf("invalid request for the function '%s' of web service '%s'. Onvif error: %s",
+			functionName, serviceName, responseEnvelope.Body.Fault.String())
+	} else if servResp.StatusCode > http.StatusNoContent {
+		return nil, fmt.Errorf("fail to execute the request for the function '%s' of web service '%s'. Onvif error: %s",
+			functionName, serviceName, responseEnvelope.Body.Fault.String())
+	}
+	return responseEnvelope.Body.Content, nil
+}
+
+func createRequest(function Function, data []byte) (interface{}, error) {
+	request := function.Request()
+	if len(data) > 0 {
+		err := json.Unmarshal(data, request)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return request, nil
+}
+
+func createResponse(function Function, data []byte) (*gosoap.SOAPEnvelope, error) {
+	response := function.Response()
+	responseEnvelope := gosoap.NewSOAPEnvelope(response)
+	err := xml.Unmarshal(data, responseEnvelope)
+	if err != nil {
+		return nil, err
+	}
+	return responseEnvelope, nil
+}
+
+// SendGetSnapshotRequest sends the Get request to retrieve the snapshot from the Onvif camera
+// The parameter url is come from the "GetSnapshotURI" command.
+func (dev *Device) SendGetSnapshotRequest(url string) (resp *http.Response, err error) {
+	soap := gosoap.NewEmptySOAP()
+
+	soap.AddRootNamespaces(Xlmns)
+	if dev.params.AuthMode == UsernameTokenAuth {
+		err = soap.AddWSSecurity(dev.params.Username, dev.params.Password)
+		if err != nil {
+			return nil, fmt.Errorf("send GetSnapshotRequest failed: %w", err)
+		}
+		var req *http.Request
+		req, err = createHttpRequest(http.MethodGet, url, soap.String())
+		if err != nil {
+			return nil, err
+		}
+		// Basic auth might work for some camera
+		req.SetBasicAuth(dev.params.Username, dev.params.Password)
+		resp, err = dev.params.HttpClient.Do(req)
+
+	} else if dev.params.AuthMode == DigestAuth || dev.params.AuthMode == Both {
+		err = soap.AddWSSecurity(dev.params.Username, dev.params.Password)
+		if err != nil {
+			return nil, fmt.Errorf("send GetSnapshotRequest failed: %w", err)
+		}
+		resp, err = dev.digestClient.Do(http.MethodGet, url, soap.String())
+
+	} else {
+		var req *http.Request
+		req, err = createHttpRequest(http.MethodGet, url, soap.String())
+		if err != nil {
+			return nil, err
+		}
+		resp, err = dev.params.HttpClient.Do(req)
+	}
+	return resp, err
 }
