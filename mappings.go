@@ -9,8 +9,6 @@
 package onvif
 
 import (
-	
-	"github.com/kalmastenitin/onvif/device"
 	"github.com/kalmastenitin/onvif/media"
 	"github.com/kalmastenitin/onvif/media2"
 	"github.com/kalmastenitin/onvif/ptz"
