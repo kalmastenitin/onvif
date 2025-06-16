@@ -819,6 +819,18 @@ type Transport struct {
 	Tunnel   *Transport        `xml:"onvif:Tunnel"`
 }
 
+const (
+	TransportProtocolUDP  TransportProtocol = "UDP"
+	TransportProtocolTCP  TransportProtocol = "TCP"
+	TransportProtocolRTSP TransportProtocol = "RTSP"
+	TransportProtocolHTTP TransportProtocol = "HTTP"
+)
+
+const (
+	StreamTypeRTPUnicast   StreamType = "RTP-Unicast"
+	StreamTypeRTPMulticast StreamType = "RTP-Multicast"
+)
+
 // enum
 type TransportProtocol xsd.String
 

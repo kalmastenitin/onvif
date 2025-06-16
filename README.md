@@ -19,6 +19,8 @@ The following services are implemented:
 - Media
 - PTZ
 - Imaging
+- Replay
+- Search
 - Event
 - Discovery
 - Auth(More Options)
@@ -101,3 +103,5 @@ resp, err := dev.CallMethod(createUsers)
 ## Great Thanks
 
 Enhanced and Improved from: [goonvif](https://github.com/yakovlevdmv/goonvif)
+Forked from: [onvif](https://github.com/use-go/onvif)
+Improved from: [onvif](https://github.com/IOTechSystems/onvif)

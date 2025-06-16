@@ -1,9 +1,12 @@
 package sdk
 
 import (
+	"bytes"
 	"context"
 	"encoding/xml"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -25,19 +28,35 @@ var (
 )
 
 func ReadAndParse(ctx context.Context, httpReply *http.Response, reply interface{}, tag string) error {
-	Logger.Debug().
-		Str("msg", httpReply.Status).
-		Int("status", httpReply.StatusCode).
-		Str("action", tag).
-		Msg("RPC")
-	// TODO(jfsmig): extract the deadline from ctx.Deadline() and apply it on the reply reading
-	b, err := io.ReadAll(httpReply.Body)
+	defer httpReply.Body.Close()
+
+	var buf bytes.Buffer
+	_, err := io.Copy(&buf, httpReply.Body)
 	if err != nil {
-		return errors.Annotate(err, "read")
+		// Treat EOF as a soft failure if body is parseable
+		if errors.Is(err, io.ErrUnexpectedEOF) {
+			fmt.Printf("[%s] WARNING: unexpected EOF, attempting to parse partial body", tag)
+		} else {
+			// logger.Log.Error().Msgf("[%s] io.Copy error: %v\nPartial body:\n%s", tag, err, buf.String())
+			return errors.Annotate(err, "read (copy)")
+		}
 	}
 
-	httpReply.Body.Close()
+	body := buf.Bytes()
 
-	err = xml.Unmarshal(b, reply)
-	return errors.Annotate(err, "decode")
+	// logger.Log.Debug().Msgf("[%s] raw response body:\n%s", tag, string(body))
+
+	if len(body) == 0 {
+		return errors.New("empty response body")
+	}
+
+	decoder := xml.NewDecoder(bytes.NewReader(body))
+	decoder.Strict = false
+	// fmt.Println("Response:", string(body))
+	err = decoder.Decode(reply)
+	if err != nil {
+		log.Println("Error in decode ", err)
+		return errors.Annotate(err, "xml decode")
+	}
+	return nil
 }

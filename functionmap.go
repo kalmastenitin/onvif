@@ -24,6 +24,8 @@ func FunctionByServiceAndFunctionName(serviceName, functionName string) (Functio
 		functionMap = ImagingFunctionMap
 	case RecordingWebService:
 		functionMap = RecordingFunctionMap
+	case SearchWebService:
+		functionMap = SearchFunctionMap
 	default:
 		return nil, fmt.Errorf("the web service '%s' is not supported", serviceName)
 	}
