@@ -9,10 +9,13 @@
 package onvif
 
 import (
+	"github.com/kalmastenitin/onvif/device"
 	"github.com/kalmastenitin/onvif/media"
 	"github.com/kalmastenitin/onvif/media2"
 	"github.com/kalmastenitin/onvif/ptz"
 	"github.com/kalmastenitin/onvif/recording"
+	"github.com/kalmastenitin/onvif/replay"
+	"github.com/kalmastenitin/onvif/search"
 )
 
 var AnalyticsFunctionMap = map[string]Function{}
@@ -256,4 +259,23 @@ var RecordingFunctionMap = map[string]Function{
 	SetRecordingJobMode:          &recording.SetRecordingJobModeFunction{},
 	SetTrackConfiguration:        &recording.SetTrackConfigurationFunction{},
 	StopExportRecordedData:       &recording.StopExportRecordedDataFunction{},
+}
+
+var SearchFunctionMap = map[string]Function{
+	EndSearch:                 &search.EndSearchFunction{},
+	FindEvents:                &search.FindEventsFunction{},
+	FindMetadata:              &search.FindMetadataFunction{},
+	FindRecordings:            &search.FindRecordingsFunction{},
+	GetEventSearchResults:     &search.GetEventSearchResultsFunction{},
+	GetMetadataSearchResults:  &search.GetMetadataSearchResultsFunction{},
+	GetRecordingInformation:   &search.GetRecordingInformationFunction{},
+	GetRecordingSearchResults: &search.GetRecordingSearchResultsFunction{},
+	GetServiceCapabilities:    &search.GetServiceCapabilitiesFunction{},
+}
+
+var ReplayFunctionMap = map[string]Function{
+	GetReplayConfiguration: &replay.GetReplayConfigurationFunction{},
+	GetReplayUri:           &replay.GetReplayUriFunction{},
+	GetServiceCapabilities: &replay.GetServiceCapabilitiesFunction{},
+	SetReplayConfiguration: &replay.SetReplayConfigurationFunction{},
 }

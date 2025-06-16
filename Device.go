@@ -38,6 +38,10 @@ var Xlmns = map[string]string{
 	"wsntw":   "http://docs.oasis-open.org/wsn/bw-2",
 	"wsrf-rw": "http://docs.oasis-open.org/wsrf/rw-2",
 	"wsaw":    "http://www.w3.org/2006/05/addressing/wsdl",
+	"trc":     "http://www.onvif.org/ver10/recording/wsdl", // Recording service
+	"tse":     "http://www.onvif.org/ver10/search/wsdl",    // Search service
+	"trp":     "http://www.onvif.org/ver10/replay/wsdl",    // Replay service
+	"tns1":    "http://www.onvif.org/ver10/topics",         // ONVIF Topics
 }
 
 // DeviceType alias for int
@@ -295,7 +299,7 @@ func (dev Device) callMethodDo(endpoint string, method interface{}) (*http.Respo
 	if dev.params.Username != "" && dev.params.Password != "" {
 		soap.AddWSSecurity(dev.params.Username, dev.params.Password)
 	}
-
+	// fmt.Println("requst: ", soap.String())
 	return networking.SendSoap(dev.params.HttpClient, endpoint, soap.String())
 }
 

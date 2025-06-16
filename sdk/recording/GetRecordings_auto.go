@@ -8,8 +8,8 @@ import (
 	"context"
 	"github.com/juju/errors"
 	"github.com/kalmastenitin/onvif"
-	"github.com/kalmastenitin/onvif/recording"
 	"github.com/kalmastenitin/onvif/sdk"
+	"github.com/kalmastenitin/onvif/recording"
 )
 
 // Call_GetRecordings forwards the call to dev.CallMethod() then parses the payload of the reply as a GetRecordingsResponse.

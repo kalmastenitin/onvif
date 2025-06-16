@@ -8,13 +8,18 @@ import (
 
 	goonvif "github.com/kalmastenitin/onvif"
 	"github.com/kalmastenitin/onvif/device"
+	"github.com/kalmastenitin/onvif/recording"
+	"github.com/kalmastenitin/onvif/replay"
 	sdk "github.com/kalmastenitin/onvif/sdk/device"
-	"github.com/kalmastenitin/onvif/xsd/onvif"
+	rec "github.com/kalmastenitin/onvif/sdk/recording"
+	play "github.com/kalmastenitin/onvif/sdk/replay"
+	"github.com/kalmastenitin/onvif/xsd"
+	onvif "github.com/kalmastenitin/onvif/xsd/onvif"
 )
 
 const (
 	login    = "admin"
-	password = "Supervisor"
+	password = "pass@123"
 )
 
 func main() {
@@ -22,46 +27,52 @@ func main() {
 
 	//Getting an camera instance
 	dev, err := goonvif.NewDevice(goonvif.DeviceParams{
-		Xaddr:      "192.168.13.14:80",
+		Xaddr:      "192.168.1.187:80",
 		Username:   login,
 		Password:   password,
 		HttpClient: new(http.Client),
+		AuthMode:   goonvif.Both,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	//Preparing commands
 	systemDateAndTyme := device.GetSystemDateAndTime{}
-	getCapabilities := device.GetCapabilities{Category: "All"}
-	createUser := device.CreateUsers{
-		User: onvif.User{
-			Username:  "TestUser",
-			Password:  "TestPassword",
-			UserLevel: "User",
-		},
-	}
-
 	//Commands execution
 	systemDateAndTymeResponse, err := sdk.Call_GetSystemDateAndTime(ctx, dev, systemDateAndTyme)
 	if err != nil {
 		log.Println(err)
 	} else {
-		fmt.Println(systemDateAndTymeResponse)
+		fmt.Println(systemDateAndTymeResponse.SystemDateAndTime)
 	}
-	getCapabilitiesResponse, err := sdk.Call_GetCapabilities(ctx, dev, getCapabilities)
+	getCapabilitiesResponse, err := sdk.Call_GetCapabilities(ctx, dev, device.GetCapabilities{Category: "All"})
 	if err != nil {
 		log.Println(err)
 	} else {
 		fmt.Println(getCapabilitiesResponse)
 	}
 
-	createUserResponse, err := sdk.Call_CreateUsers(ctx, dev, createUser)
+	getRecordingResponse, err := rec.Call_GetRecordings(ctx, dev, recording.GetRecordings{})
 	if err != nil {
-		log.Println(err)
+		log.Printf("error :%v", err)
 	} else {
-		// You could use https://github.com/kalmastenitin/onvif/gosoap for pretty printing response
-		fmt.Println(createUserResponse)
+		if len(getRecordingResponse.RecordingItem) > 0 {
+			streamSetup := onvif.StreamSetup{
+				Stream: onvif.StreamTypeRTPUnicast,
+				Transport: onvif.Transport{
+					Protocol: onvif.TransportProtocolRTSP,
+				},
+			}
+			getRecordingUri, err := play.Call_GetReplayUri(ctx, dev, replay.GetReplayUri{
+
+				RecordingToken: xsd.String(getRecordingResponse.RecordingItem[0].RecordingToken), StreamSetup: streamSetup})
+			if err != nil {
+				log.Printf("error :%v", err)
+			} else {
+				log.Println("recording uri", getRecordingUri.Uri)
+			}
+		}
+
 	}
 
 }

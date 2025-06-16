@@ -10,6 +10,15 @@ import (
 // TrackType type
 type TrackType string
 
+type Track struct {
+	TrackToken    xsd.String         `xml:"tt:TrackToken"`
+	Configuration TrackConfiguration `xml:"tt:Configuration"`
+}
+
+type Tracks struct {
+	Track []Track `xml:"tt:Track"`
+}
+
 const (
 	// TrackTypeVideo const
 	TrackTypeVideo TrackType = "Video"
@@ -41,30 +50,20 @@ type GetServiceCapabilitiesResponse struct {
 	Capabilities Capabilities `xml:"Capabilities,omitempty"`
 }
 
-// CreateRecording type
-type CreateRecording struct {
-	XMLName xml.Name `xml:"tt:CreateRecording"`
-
-	// Initial configuration for the recording.
-	RecordingConfiguration RecordingConfiguration `xml:"tt:RecordingConfiguration,omitempty"`
-}
-
 // RecordingConfiguration type
 type RecordingConfiguration struct {
+	Source               RecordingSource `xml:"tt:Source"`
+	Content              xsd.String      `xml:"tt:Content"`
+	MaximumRetentionTime xsd.Duration    `xml:"tt:MaximumRetentionTime"`
+}
 
-	// Information about the source of the recording.
-	Source RecordingSourceInformation `xml:"tt:Source,omitempty"`
-
-	// Informative description of the source.
-	Content onvif.Description `xml:"tt:Content,omitempty"`
-
-	// Sspecifies the maximum time that data in any track within the
-	// recording shall be stored. The device shall delete any data older than the maximum retention
-	// time. Such data shall not be accessible anymore. If the MaximumRetentionPeriod is set to 0,
-	// the device shall not limit the retention time of stored data, except by resource constraints.
-	// Whatever the value of MaximumRetentionTime, the device may automatically delete
-	// recordings to free up storage space for new recordings.
-	MaximumRetentionTime xsd.Duration `xml:"tt:MaximumRetentionTime,omitempty"`
+// Recording configuration and source structures based on your device response
+type RecordingSource struct {
+	SourceId    xsd.String `xml:"tt:SourceId"`
+	Name        xsd.String `xml:"tt:Name"`
+	Location    xsd.String `xml:"tt:Location"`
+	Description xsd.String `xml:"tt:Description"`
+	Address     xsd.String `xml:"tt:Address"`
 }
 
 // RecordingSourceInformation type
@@ -88,44 +87,38 @@ type RecordingSourceInformation struct {
 	Address xsd.AnyURI `xml:"tt:Address,omitempty"`
 }
 
-// CreateRecordingResponse type
-type CreateRecordingResponse struct {
-	XMLName xml.Name `xml:"CreateRecordingResponse"`
-
-	// The reference to the created recording.
-	RecordingToken RecordingReference `xml:"RecordingToken,omitempty"`
-}
-
-// DeleteRecording type
-type DeleteRecording struct {
-	XMLName xml.Name `xml:"tt:DeleteRecording"`
-
-	// The reference of the recording to be deleted.
-	RecordingToken RecordingReference `xml:"tt:RecordingToken,omitempty"`
-}
-
-// DeleteRecordingResponse type
-type DeleteRecordingResponse struct {
-	XMLName xml.Name `xml:"DeleteRecordingResponse"`
-}
-
-// GetRecordings type
+// GetRecordings request and response
 type GetRecordings struct {
-	XMLName xml.Name `xml:"tt:GetRecordings"`
+	XMLName string `xml:"trc:GetRecordings"`
 }
 
-// GetRecordingsResponse type
+// GetRecordingsResponse response structure
 type GetRecordingsResponse struct {
-	XMLName xml.Name `xml:"GetRecordingsResponse"`
+	RecordingItem []RecordingItem `xml:"RecordingItem"`
+}
 
-	// List of recording items.
-	RecordingItem []GetRecordingsResponseItem
+// RecordingItem represents a single recording
+type RecordingItem struct {
+	// Recording token identifier
+	RecordingToken xsd.String `xml:"RecordingToken"`
+
+	// Recording configuration
+	Configuration RecordingConfiguration `xml:"Configuration"`
+
+	// Available tracks in this recording
+	Tracks RecordingTracks `xml:"Tracks"`
+}
+
+// RecordingTracks contains track information
+type RecordingTracks struct {
+	// List of available tracks
+	Track []Track `xml:"Track"`
 }
 
 // GetRecordingsResponseItem type
 type GetRecordingsResponseItem struct {
 	// Token of the recording.
-	RecordingToken RecordingReference
+	RecordingToken xsd.String
 
 	// Configuration of the recording.
 	Configuration struct {
@@ -161,15 +154,10 @@ type GetTracksResponseItem struct {
 	}
 }
 
-// TrackConfiguration type
+// Track configuration within a recording
 type TrackConfiguration struct {
-
-	// Type of the track. It shall be equal to the strings “Video”,
-	// “Audio” or “Metadata”. The track shall only be able to hold data of that type.
-	TrackType TrackType `xml:"tt:TrackType,omitempty"`
-
-	// Informative description of the track.
-	Description onvif.Description `xml:"tt:Description,omitempty"`
+	TrackType   xsd.String `xml:"tt:TrackType"` // Video, Audio, Metadata
+	Description xsd.String `xml:"tt:Description"`
 }
 
 // SetRecordingConfiguration type
@@ -279,58 +267,15 @@ type SetTrackConfigurationResponse struct {
 	XMLName xml.Name `xml:"SetTrackConfigurationResponse"`
 }
 
-// CreateRecordingJob type
-type CreateRecordingJob struct {
-	XMLName xml.Name `xml:"tt:CreateRecordingJob"`
-
-	// The initial configuration of the new recording job.
-	JobConfiguration RecordingJobConfiguration `xml:"tt:JobConfiguration,omitempty"`
-}
-
-// CreateRecordingJobResponse type
-type CreateRecordingJobResponse struct {
-	XMLName xml.Name `xml:"CreateRecordingJobResponse"`
-
-	// The JobToken shall identify the created recording job.
-	JobToken RecordingJobReference `xml:"JobToken,omitempty"`
-
-	//
-	// The JobConfiguration structure shall be the configuration as it is used by the device. This may be different from the
-	// JobConfiguration passed to CreateRecordingJob.
-	JobConfiguration RecordingJobConfiguration `xml:"JobConfiguration,omitempty"`
-}
-
 // RecordingJobReference type
 type RecordingJobReference ReferenceToken
 
-// RecordingJobConfiguration type
+// Recording job structures
 type RecordingJobConfiguration struct {
-
-	// Identifies the recording to which this job shall store the received data.
-	RecordingToken RecordingReference `xml:"tt:RecordingToken,omitempty"`
-
-	// The mode of the job. If it is idle, nothing shall happen. If it is active, the device shall try
-	// to obtain data from the receivers. A client shall use GetRecordingJobState to determine if data transfer is really taking place.
-	// The only valid values for Mode shall be “Idle” and “Active”.
-	Mode RecordingJobMode `xml:"tt:Mode,omitempty"`
-
-	// This shall be a non-negative number. If there are multiple recording jobs that store data to
-	// the same track, the device will only store the data for the recording job with the highest
-	// priority. The priority is specified per recording job, but the device shall determine the priority
-	// of each track individually. If there are two recording jobs with the same priority, the device
-	// shall record the data corresponding to the recording job that was activated the latest.
-	Priority int32 `xml:"tt:Priority,omitempty"`
-
-	// Source of the recording.
-	Source []RecordingJobSource `xml:"tt:Source,omitempty"`
-
-	Extension RecordingJobConfigurationExtension `xml:"tt:Extension,omitempty"`
-
-	// This attribute adds an additional requirement for activating the recording job.
-	// If this optional field is provided the job shall only record if the schedule exists and is active.
-	//
-
-	ScheduleToken string `xml:"tt:ScheduleToken,attr,omitempty"`
+	RecordingToken xsd.String         `xml:"RecordingToken"`
+	Mode           xsd.String         `xml:"Mode"` // Never, Always, MotionOnly
+	Priority       xsd.Int            `xml:"Priority"`
+	Source         RecordingJobSource `xml:"Source"`
 }
 
 // RecordingJobConfigurationExtension type
@@ -338,38 +283,16 @@ type RecordingJobConfigurationExtension struct {
 }
 
 // RecordingJobSource type
+
 type RecordingJobSource struct {
-
-	// This field shall be a reference to the source of the data. The type of the source
-	// is determined by the attribute Type in the SourceToken structure. If Type is
-	// http://www.onvif.org/ver10/schema/Receiver, the token is a ReceiverReference. In this case
-	// the device shall receive the data over the network. If Type is
-	// http://www.onvif.org/ver10/schema/Profile, the token identifies a media profile, instructing the
-	// device to obtain data from a profile that exists on the local device.
-	SourceToken SourceReference `xml:"tt:SourceToken,omitempty"`
-
-	// If this field is TRUE, and if the SourceToken is omitted, the device
-	// shall create a receiver object (through the receiver service) and assign the
-	// ReceiverReference to the SourceToken field. When retrieving the RecordingJobConfiguration
-	// from the device, the AutoCreateReceiver field shall never be present.
-	AutoCreateReceiver bool `xml:"tt:AutoCreateReceiver,omitempty"`
-
-	// List of tracks associated with the recording.
-	Tracks []RecordingJobTrack `xml:"tt:Tracks,omitempty"`
-
-	Extension RecordingJobSourceExtension `xml:"tt:Extension,omitempty"`
+	SourceToken        xsd.String          `xml:"SourceToken"`
+	AutoCreateReceiver xsd.Boolean         `xml:"AutoCreateReceiver"`
+	Tracks             []RecordingJobTrack `xml:"Tracks"`
 }
 
-// RecordingJobTrack type
 type RecordingJobTrack struct {
-
-	// If the received RTSP stream contains multiple tracks of the same type, the
-	// SourceTag differentiates between those Tracks. This field can be ignored in case of recording a local source.
-	SourceTag string `xml:"tt:SourceTag,omitempty"`
-
-	// The destination is the tracktoken of the track to which the device shall store the
-	// received data.
-	Destination TrackReference `xml:"tt:Destination,omitempty"`
+	SourceTag   xsd.String `xml:"SourceTag"`
+	Destination xsd.String `xml:"Destination"`
 }
 
 // RecordingJobSourceExtension type
@@ -396,19 +319,6 @@ type DeleteRecordingJob struct {
 // DeleteRecordingJobResponse type
 type DeleteRecordingJobResponse struct {
 	XMLName xml.Name `xml:"DeleteRecordingJobResponse"`
-}
-
-// GetRecordingJobs type
-type GetRecordingJobs struct {
-	XMLName xml.Name `xml:"tt:GetRecordingJobs"`
-}
-
-// GetRecordingJobsResponse type
-type GetRecordingJobsResponse struct {
-	XMLName xml.Name `xml:"GetRecordingJobsResponse"`
-
-	// List of recording jobs.
-	JobItem []GetRecordingJobsResponseItem `xml:"JobItem,omitempty"`
 }
 
 // GetRecordingJobsResponseItem type
@@ -786,8 +696,63 @@ type RecordingReference ReferenceToken
 type TrackReference ReferenceToken
 
 // ReferenceToken type
-type ReferenceToken string
+type ReferenceToken xsd.String
 
 // SearchScopeExtension type
 type SearchScopeExtension struct {
+}
+
+// Recording service capabilities
+type RecordingCapabilities struct {
+	DynamicRecordings      xsd.Boolean  `xml:"DynamicRecordings,attr"`
+	DynamicTracks          xsd.Boolean  `xml:"DynamicTracks,attr"`
+	Encoding               []xsd.String `xml:"Encoding,omitempty"`
+	MaxStringLength        xsd.Int      `xml:"MaxStringLength,attr"`
+	MaxRecordings          xsd.Int      `xml:"MaxRecordings,attr"`
+	MaxRecordingJobs       xsd.Int      `xml:"MaxRecordingJobs,attr"`
+	Options                xsd.Boolean  `xml:"Options,attr"`
+	MetadataRecording      xsd.Boolean  `xml:"MetadataRecording,attr"`
+	SupportedExportFormats []xsd.String `xml:"SupportedExportFormats,omitempty"`
+}
+
+type RecordingJob struct {
+	JobToken         xsd.String                `xml:"JobToken"`
+	JobConfiguration RecordingJobConfiguration `xml:"JobConfiguration"`
+}
+
+type CreateRecordingJob struct {
+	XMLName          onvif.Name                `xml:"trc:CreateRecordingJob"`
+	JobConfiguration RecordingJobConfiguration `xml:"trc:JobConfiguration"`
+}
+
+type CreateRecordingJobResponse struct {
+	JobToken         xsd.String                `xml:"JobToken"`
+	JobConfiguration RecordingJobConfiguration `xml:"JobConfiguration"`
+}
+
+type GetRecordingJobs struct {
+	XMLName onvif.Name `xml:"trc:GetRecordingJobs"`
+}
+
+type GetRecordingJobsResponse struct {
+	JobItem []RecordingJob `xml:"JobItem"`
+}
+
+// Basic recording management
+type CreateRecording struct {
+	XMLName       onvif.Name             `xml:"trc:CreateRecording"`
+	Configuration RecordingConfiguration `xml:"trc:Configuration"`
+}
+
+type CreateRecordingResponse struct {
+	RecordingToken xsd.String `xml:"RecordingToken"`
+}
+
+type DeleteRecording struct {
+	XMLName        onvif.Name `xml:"trc:DeleteRecording"`
+	RecordingToken xsd.String `xml:"trc:RecordingToken"`
+}
+
+type DeleteRecordingResponse struct {
+	XMLName onvif.Name `xml:"trc:DeleteRecordingResponse"`
 }
