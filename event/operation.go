@@ -23,8 +23,8 @@ type SubscriptionPolicy struct { //tev http://www.onvif.org/ver10/events/wsdl
 type Subscribe struct { //http://docs.oasis-open.org/wsn/b-2.xsd
 	XMLName                struct{}                   `xml:"wsnt:Subscribe"`
 	ConsumerReference      EndpointReferenceType      `xml:"wsnt:ConsumerReference"`
-	Filter                 FilterType                 `xml:"wsnt:Filter"`
-	SubscriptionPolicy     SubscriptionPolicy         `xml:"wsnt:SubscriptionPolicy"`
+	Filter                 FilterType                 `xml:"wsnt:Filter,omitempty"`
+	SubscriptionPolicy     SubscriptionPolicy         `xml:"wsnt:SubscriptionPolicy,omitempty"`
 	InitialTerminationTime AbsoluteOrRelativeTimeType `xml:"wsnt:InitialTerminationTime"`
 }
 
