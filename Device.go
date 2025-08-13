@@ -272,7 +272,6 @@ func (dev Device) getEndpoint(endpoint string) (string, error) {
 func (dev Device) CallMethod(method interface{}) (*http.Response, error) {
 	pkgPath := strings.Split(reflect.TypeOf(method).PkgPath(), "/")
 	pkg := strings.ToLower(pkgPath[len(pkgPath)-1])
-
 	endpoint, err := dev.getEndpoint(pkg)
 	if err != nil {
 		return nil, err
