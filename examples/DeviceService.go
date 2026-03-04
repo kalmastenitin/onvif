@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
 
 	goonvif "github.com/kalmastenitin/onvif"
-	searchsdk "github.com/kalmastenitin/onvif/sdk/search"
-	"github.com/kalmastenitin/onvif/search"
+
+	receiver "github.com/kalmastenitin/onvif/sdk/receiver"
+
+	receive_types "github.com/kalmastenitin/onvif/receiver/types"
 )
 
 const (
 	login    = "admin"
-	password = "example"
+	password = "sachin1997"
 )
 
 func main() {
@@ -21,14 +21,13 @@ func main() {
 
 	//Getting an camera instance
 	dev, err := goonvif.NewDevice(goonvif.DeviceParams{
-		Xaddr:      "192.168.1.12",
-		Username:   login,
-		Password:   password,
-		HttpClient: new(http.Client),
-		AuthMode:   goonvif.Both,
+		Xaddr:    "192.168.1.241",
+		Username: login,
+		Password: password,
+		AuthMode: goonvif.Both,
 	})
 	if err != nil {
-		panic(err)
+		log.Println("err creating device %v", err)
 	}
 
 	// systemDateAndTyme := device.GetSystemDateAndTime{}
@@ -46,12 +45,12 @@ func main() {
 	// 	fmt.Println(getCapabilitiesResponse)
 	// }
 
-	getRecoringInfoResponse, err := searchsdk.Call_GetRecordingInformation(ctx, dev, search.GetRecordingInformation{})
-	if err != nil {
-		log.Println(err)
-	} else {
-		fmt.Println(getRecoringInfoResponse)
-	}
+	// getRecoringInfoResponse, err := searchsdk.Call_GetRecordingInformation(ctx, dev, search.GetRecordingInformation{})
+	// if err != nil {
+	// 	log.Println(err)
+	// } else {
+	// 	fmt.Println(getRecoringInfoResponse)
+	// }
 
 	// getRecordingResponse, err := rec.Call_GetRecordings(ctx, dev, recording.GetRecordings{})
 	// if err != nil {
@@ -75,5 +74,12 @@ func main() {
 	// 	}
 
 	// }
+
+	resp, err := receiver.Call_GetReceivers(ctx, dev, receive_types.GetReceivers{})
+	if err != nil {
+		log.Printf("error :%v", err)
+	} else {
+		log.Println("recording uri", resp)
+	}
 
 }

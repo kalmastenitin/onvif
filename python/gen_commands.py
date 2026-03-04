@@ -31,6 +31,7 @@ SERVICE_NAMES = [
     'recording',
     'search',
     'replay',
+    'receiver'
 ]
 
 

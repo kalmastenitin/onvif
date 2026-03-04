@@ -13,6 +13,7 @@ import (
 	"github.com/kalmastenitin/onvif/media"
 	"github.com/kalmastenitin/onvif/media2"
 	"github.com/kalmastenitin/onvif/ptz"
+	"github.com/kalmastenitin/onvif/receiver"
 	"github.com/kalmastenitin/onvif/recording"
 	"github.com/kalmastenitin/onvif/replay"
 	"github.com/kalmastenitin/onvif/search"
@@ -278,4 +279,24 @@ var ReplayFunctionMap = map[string]Function{
 	GetReplayUri:           &replay.GetReplayUriFunction{},
 	GetServiceCapabilities: &replay.GetServiceCapabilitiesFunction{},
 	SetReplayConfiguration: &replay.SetReplayConfigurationFunction{},
+}
+
+var ReceiverFunctionMap = map[string]Function{
+	ConfigureReceiver:      &receiver.ConfigureReceiverFunction{},
+	CreatePullPoint:        &receiver.CreatePullPointFunction{},
+	CreateReceiver:         &receiver.CreateReceiverFunction{},
+	DeleteReceiver:         &receiver.DeleteReceiverFunction{},
+	DestroyPullPoint:       &receiver.DestroyPullPointFunction{},
+	GetCurrentMessage:      &receiver.GetCurrentMessageFunction{},
+	GetMessages:            &receiver.GetMessagesFunction{},
+	GetReceiver:            &receiver.GetReceiverFunction{},
+	GetReceiverState:       &receiver.GetReceiverStateFunction{},
+	GetReceivers:           &receiver.GetReceiversFunction{},
+	GetServiceCapabilities: &receiver.GetServiceCapabilitiesFunction{},
+	PauseSubscription:      &receiver.PauseSubscriptionFunction{},
+	Renew:                  &receiver.RenewFunction{},
+	ResumeSubscription:     &receiver.ResumeSubscriptionFunction{},
+	SetReceiverMode:        &receiver.SetReceiverModeFunction{},
+	Subscribe:              &receiver.SubscribeFunction{},
+	Unsubscribe:            &receiver.UnsubscribeFunction{},
 }

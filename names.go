@@ -20,6 +20,7 @@ const (
 	RecordingWebService = "Recording"
 	SearchWebService    = "Search"
 	ReplayWebService    = "Replay"
+	ReceiverWebService  = "Receiver"
 )
 
 // WebService - Analytics
@@ -285,4 +286,24 @@ const (
 	GetReplayConfiguration = "GetReplayConfiguration"
 	GetReplayUri           = "GetReplayUri"
 	SetReplayConfiguration = "SetReplayConfiguration"
+)
+
+// WebService - Receiver
+const (
+	ConfigureReceiver  = "ConfigureReceiver"
+	CreatePullPoint    = "CreatePullPoint"
+	CreateReceiver     = "CreateReceiver"
+	DeleteReceiver     = "DeleteReceiver"
+	DestroyPullPoint   = "DestroyPullPoint"
+	GetCurrentMessage  = "GetCurrentMessage"
+	GetMessages        = "GetMessages"
+	GetReceiver        = "GetReceiver"
+	GetReceiverState   = "GetReceiverState"
+	GetReceivers       = "GetReceivers"
+	PauseSubscription  = "PauseSubscription"
+	Renew              = "Renew"
+	ResumeSubscription = "ResumeSubscription"
+	SetReceiverMode    = "SetReceiverMode"
+	Subscribe          = "Subscribe"
+	Unsubscribe        = "Unsubscribe"
 )
