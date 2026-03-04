@@ -1,6 +1,8 @@
 package search
 
 import (
+	"encoding/xml"
+
 	"github.com/kalmastenitin/onvif/xsd"
 	"github.com/kalmastenitin/onvif/xsd/onvif"
 )
@@ -13,18 +15,18 @@ type IncludedSource struct {
 }
 
 type SearchScope struct {
-	IncludedSources            []IncludedSource `xml:"tt:IncludedSources,omitempty"`
-	IncludedRecordings         []xsd.String     `xml:"tt:IncludedRecordings,omitempty"`
-	RecordingInformationFilter xsd.String       `xml:"tt:RecordingInformationFilter,omitempty"`
+	IncludedSources            []IncludedSource `xml:"IncludedSources,omitempty"`
+	IncludedRecordings         []xsd.String     `xml:"IncludedRecordings,omitempty"`
+	RecordingInformationFilter xsd.String       `xml:"RecordingInformationFilter,omitempty"`
 }
 
 type FindRecordings struct {
-	XMLName       onvif.Name   `xml:"tse:FindRecordings"`
-	StartPoint    xsd.DateTime `xml:"tse:StartPoint,omitempty"`
-	EndPoint      xsd.DateTime `xml:"tse:EndPoint,omitempty"`
-	Scope         SearchScope  `xml:"tse:Scope"`
-	MaxMatches    xsd.Int      `xml:"tse:MaxMatches,omitempty"`
-	KeepAliveTime xsd.Duration `xml:"tse:KeepAliveTime"`
+	XMLName       onvif.Name   `xml:"FindRecordings"`
+	StartPoint    xsd.DateTime `xml:"StartPoint,omitempty"`
+	EndPoint      xsd.DateTime `xml:"EndPoint,omitempty"`
+	Scope         SearchScope  `xml:"Scope"`
+	MaxMatches    xsd.Int      `xml:"MaxMatches,omitempty"`
+	KeepAliveTime xsd.Duration `xml:"KeepAliveTime"`
 }
 
 type FindRecordingsResponse struct {
@@ -32,39 +34,39 @@ type FindRecordingsResponse struct {
 }
 
 type GetRecordingSearchResults struct {
-	XMLName     onvif.Name   `xml:"tse:GetRecordingSearchResults"`
-	SearchToken xsd.String   `xml:"tse:SearchToken"`
-	MinResults  xsd.Int      `xml:"tse:MinResults,omitempty"`
-	MaxResults  xsd.Int      `xml:"tse:MaxResults,omitempty"`
-	WaitTime    xsd.Duration `xml:"tse:WaitTime,omitempty"`
+	XMLName     onvif.Name   `xml:"GetRecordingSearchResults"`
+	SearchToken xsd.String   `xml:"SearchToken"`
+	MinResults  xsd.Int      `xml:"MinResults,omitempty"`
+	MaxResults  xsd.Int      `xml:"MaxResults,omitempty"`
+	WaitTime    xsd.Duration `xml:"WaitTime,omitempty"`
 }
 
 // Recording source information
 type RecordingSource struct {
-	SourceId    xsd.String `xml:"tt:SourceId"`
-	Name        xsd.String `xml:"tt:Name"`
-	Location    xsd.String `xml:"tt:Location"`
-	Description xsd.String `xml:"tt:Description"`
-	Address     xsd.String `xml:"tt:Address"`
+	SourceId    xsd.String `xml:"SourceId"`
+	Name        xsd.String `xml:"Name"`
+	Location    xsd.String `xml:"Location"`
+	Description xsd.String `xml:"Description"`
+	Address     xsd.String `xml:"Address"`
 }
 
 // Track information within a recording
 type RecordingTrack struct {
-	TrackToken  xsd.String   `xml:"tt:TrackToken"`
-	TrackType   xsd.String   `xml:"tt:TrackType"` // Video, Audio, Metadata
-	Description xsd.String   `xml:"tt:Description"`
-	DataFrom    xsd.DateTime `xml:"tt:DataFrom"`
-	DataTo      xsd.DateTime `xml:"tt:DataTo"`
+	TrackToken  xsd.String   `xml:"TrackToken"`
+	TrackType   xsd.String   `xml:"TrackType"` // Video, Audio, Metadata
+	Description xsd.String   `xml:"Description"`
+	DataFrom    xsd.DateTime `xml:"DataFrom"`
+	DataTo      xsd.DateTime `xml:"DataTo"`
 }
 
 type RecordingInformation struct {
-	RecordingToken    xsd.String       `xml:"tt:RecordingToken"`
-	Source            RecordingSource  `xml:"tt:Source"`
-	EarliestRecording xsd.DateTime     `xml:"tt:EarliestRecording"`
-	LatestRecording   xsd.DateTime     `xml:"tt:LatestRecording"`
-	Content           xsd.String       `xml:"tt:Content"`
-	Track             []RecordingTrack `xml:"tt:Track"`
-	RecordingStatus   xsd.String       `xml:"tt:RecordingStatus"`
+	RecordingToken    xsd.String       `xml:"RecordingToken"`
+	Source            RecordingSource  `xml:"Source"`
+	EarliestRecording xsd.DateTime     `xml:"EarliestRecording"`
+	LatestRecording   xsd.DateTime     `xml:"LatestRecording"`
+	Content           xsd.String       `xml:"Content"`
+	Track             []RecordingTrack `xml:"Track"`
+	RecordingStatus   xsd.String       `xml:"RecordingStatus"`
 }
 
 type GetRecordingSearchResultsResponse struct {
@@ -81,7 +83,8 @@ type GetRecordingInformation struct {
 }
 
 type GetRecordingInformationResponse struct {
-	RecordingInformation RecordingInformation `xml:"tse:RecordingInformation"`
+	XMLName              xml.Name             `xml:"GetRecordingInformationResponse"`
+	RecordingInformation RecordingInformation `xml:"RecordingInformation"`
 }
 
 // Metadata search structures
@@ -90,13 +93,13 @@ type MetadataFilter struct {
 }
 
 type FindMetadata struct {
-	XMLName        onvif.Name     `xml:"tse:FindMetadata"`
-	StartPoint     xsd.DateTime   `xml:"tse:StartPoint"`
-	EndPoint       xsd.DateTime   `xml:"tse:EndPoint,omitempty"`
-	Scope          SearchScope    `xml:"tse:Scope"`
-	MetadataFilter MetadataFilter `xml:"tse:MetadataFilter"`
-	MaxMatches     xsd.Int        `xml:"tse:MaxMatches,omitempty"`
-	KeepAliveTime  xsd.Duration   `xml:"tse:KeepAliveTime"`
+	XMLName        onvif.Name     `xml:"FindMetadata"`
+	StartPoint     xsd.DateTime   `xml:"StartPoint"`
+	EndPoint       xsd.DateTime   `xml:"EndPoint,omitempty"`
+	Scope          SearchScope    `xml:"Scope"`
+	MetadataFilter MetadataFilter `xml:"MetadataFilter"`
+	MaxMatches     xsd.Int        `xml:"MaxMatches,omitempty"`
+	KeepAliveTime  xsd.Duration   `xml:"KeepAliveTime"`
 }
 
 type FindMetadataResponse struct {
@@ -109,14 +112,14 @@ type EventFilter struct {
 }
 
 type FindEvents struct {
-	XMLName           onvif.Name   `xml:"tse:FindEvents"`
-	StartPoint        xsd.DateTime `xml:"tse:StartPoint"`
-	EndPoint          xsd.DateTime `xml:"tse:EndPoint,omitempty"`
-	Scope             SearchScope  `xml:"tse:Scope"`
-	SearchFilter      EventFilter  `xml:"tse:SearchFilter"`
-	IncludeStartState xsd.Boolean  `xml:"tse:IncludeStartState,omitempty"`
-	MaxMatches        xsd.Int      `xml:"tse:MaxMatches,omitempty"`
-	KeepAliveTime     xsd.Duration `xml:"tse:KeepAliveTime"`
+	XMLName           onvif.Name   `xml:"FindEvents"`
+	StartPoint        xsd.DateTime `xml:"StartPoint"`
+	EndPoint          xsd.DateTime `xml:"EndPoint,omitempty"`
+	Scope             SearchScope  `xml:"Scope"`
+	SearchFilter      EventFilter  `xml:"SearchFilter"`
+	IncludeStartState xsd.Boolean  `xml:"IncludeStartState,omitempty"`
+	MaxMatches        xsd.Int      `xml:"MaxMatches,omitempty"`
+	KeepAliveTime     xsd.Duration `xml:"KeepAliveTime"`
 }
 
 // Event search result structures based on official ONVIF specification
@@ -142,11 +145,11 @@ type FindEventResultList struct {
 
 // Add missing GetEventSearchResults structures
 type GetEventSearchResults struct {
-	XMLName     onvif.Name   `xml:"tse:GetEventSearchResults"`
-	SearchToken xsd.String   `xml:"tse:SearchToken"`
-	MinResults  xsd.Int      `xml:"tse:MinResults,omitempty"`
-	MaxResults  xsd.Int      `xml:"tse:MaxResults,omitempty"`
-	WaitTime    xsd.Duration `xml:"tse:WaitTime,omitempty"`
+	XMLName     onvif.Name   `xml:"GetEventSearchResults"`
+	SearchToken xsd.String   `xml:"SearchToken"`
+	MinResults  xsd.Int      `xml:"MinResults,omitempty"`
+	MaxResults  xsd.Int      `xml:"MaxResults,omitempty"`
+	WaitTime    xsd.Duration `xml:"WaitTime,omitempty"`
 }
 
 type GetEventSearchResultsResponse struct {
@@ -154,7 +157,7 @@ type GetEventSearchResultsResponse struct {
 }
 
 type GetServiceCapabilities struct {
-	XMLName onvif.Name `xml:"tse:GetServiceCapabilities"`
+	XMLName onvif.Name `xml:"GetServiceCapabilities"`
 }
 
 type SearchCapabilities struct {
@@ -168,8 +171,8 @@ type GetServiceCapabilitiesResponse struct {
 
 // EndSearch request and response structures
 type EndSearch struct {
-	XMLName     onvif.Name `xml:"tse:EndSearch"`
-	SearchToken xsd.String `xml:"tse:SearchToken"`
+	XMLName     onvif.Name `xml:"EndSearch"`
+	SearchToken xsd.String `xml:"SearchToken"`
 }
 type EndSearchResponse struct {
 	// According to ONVIF spec, EndSearch returns search endpoint information
@@ -182,11 +185,11 @@ type FindEventsResponse struct {
 }
 
 type GetMetadataSearchResults struct {
-	XMLName     onvif.Name   `xml:"tse:GetMetadataSearchResults"`
-	SearchToken xsd.String   `xml:"tse:SearchToken"`
-	MinResults  xsd.Int      `xml:"tse:MinResults,omitempty"`
-	MaxResults  xsd.Int      `xml:"tse:MaxResults,omitempty"`
-	WaitTime    xsd.Duration `xml:"tse:WaitTime,omitempty"`
+	XMLName     onvif.Name   `xml:"GetMetadataSearchResults"`
+	SearchToken xsd.String   `xml:"SearchToken"`
+	MinResults  xsd.Int      `xml:"MinResults,omitempty"`
+	MaxResults  xsd.Int      `xml:"MaxResults,omitempty"`
+	WaitTime    xsd.Duration `xml:"WaitTime,omitempty"`
 }
 
 // Metadata search result structures

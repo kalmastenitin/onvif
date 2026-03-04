@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 
 	"net/http"
 	"net/url"
@@ -158,17 +159,17 @@ func GetAvailableDevicesAtSpecificEthernetInterface(interfaceName string) ([]Dev
 }
 
 func (dev *Device) getSupportedServices(resp *http.Response) error {
+	defer resp.Body.Close()
 	doc := etree.NewDocument()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Printf("error in reading %v", err)
 		return err
 	}
 
-	resp.Body.Close()
-
 	if err := doc.ReadFromBytes(data); err != nil {
-		//log.Println(err.Error())
+		log.Println(err.Error())
 		return err
 	}
 
@@ -272,7 +273,6 @@ func (dev Device) getEndpoint(endpoint string) (string, error) {
 func (dev Device) CallMethod(method interface{}) (*http.Response, error) {
 	pkgPath := strings.Split(reflect.TypeOf(method).PkgPath(), "/")
 	pkg := strings.ToLower(pkgPath[len(pkgPath)-1])
-
 	endpoint, err := dev.getEndpoint(pkg)
 	if err != nil {
 		return nil, err
